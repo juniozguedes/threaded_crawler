@@ -9,16 +9,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 def google_search(query):
-    # Set the URL for Google Search
     url = f"https://www.google.com/search?q={query}+linkedin"
     pattern = f"company/{query}"
 
-    # Send a GET request to the URL
     response = requests.get(url)
 
-    # Check if the request was successful
     if response.status_code == 200:
-        # Parse the HTML content of the page
         soup = BeautifulSoup(response.text, "html.parser")
 
         # Find all <a> (anchor) tags in the parsed HTML
@@ -28,7 +24,6 @@ def google_search(query):
         for link in links:
             href = link.get("href")
             if href and pattern in href:
-                # Return the link when the pattern is found
                 # Find the index of "https://"
                 start_index = href.find("https://")
 
@@ -68,17 +63,9 @@ def company_thread(csv_input):
         company_linkedin = google_search(company)
         linkedin_urls.append(company_linkedin)
 
-    # Specify the CSV file path
     csv_file_path = "urls.csv"
-
-    # Open the CSV file in write mode
     with open(csv_file_path, mode="w", newline="", encoding="utf-8") as csv_file:
-        # Create a CSV writer
         csv_writer = csv.writer(csv_file)
-
-        # Write the header row if needed (e.g., 'URLs')
-        # csv_writer.writerow(['URLs'])
-
         # Write each URL to a new row in the CSV file
         for url in linkedin_urls:
             csv_writer.writerow([url])
