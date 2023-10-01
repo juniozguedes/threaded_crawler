@@ -1,8 +1,9 @@
 import csv
 import os
+import time
 import requests
 from bs4 import BeautifulSoup
-
+from playwright.sync_api import sync_playwright
 from app.exceptions import CustomException, ValidationException
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -55,6 +56,25 @@ def read_csv_file(file_path):
         raise CustomException("An error occurred", 500) from exception
 
 
+def list_to_csv(_list, csv_file_path):
+    with open(csv_file_path, mode="w", newline="", encoding="utf-8") as csv_file:
+        csv_writer = csv.writer(csv_file)
+        # Write each URL to a new row in the CSV file
+        for url in _list:
+            csv_writer.writerow([url])
+
+
+def get_employee_count(linkedin_url):
+    with sync_playwright() as play:
+        browser = play.chromium.launch()
+        page = browser.new_page()
+        page.goto(linkedin_url)
+        span = page.locator('xpath=//*[@id="ember29"]/span')
+        print(span)
+        time.sleep(2)
+        return True
+
+
 def company_thread(csv_input):
     print("Running company csv thread")
     companies_list = read_csv_file(csv_input)
@@ -63,11 +83,15 @@ def company_thread(csv_input):
         company_linkedin = google_search(company)
         linkedin_urls.append(company_linkedin)
 
-    csv_file_path = "urls.csv"
-    with open(csv_file_path, mode="w", newline="", encoding="utf-8") as csv_file:
-        csv_writer = csv.writer(csv_file)
-        # Write each URL to a new row in the CSV file
-        for url in linkedin_urls:
-            csv_writer.writerow([url])
+    csv_file_path = "companies_output.csv"
+    list_to_csv(linkedin_urls, csv_file_path)
 
     print(f"URLs have been saved to {csv_file_path}")
+
+    employee_count_list = []
+    for linkedin_url in linkedin_urls:
+        employee_count = get_employee_count(linkedin_url)
+        employee_count_list.append(
+            {"url": linkedin_url, "employee_count": employee_count}
+        )
+    print(employee_count_list)
