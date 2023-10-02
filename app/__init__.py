@@ -18,10 +18,11 @@ ma.init_app(app)
 print("Starting threads")
 CSV_INPUT = "companies_input.csv"
 
-thread1 = threading.Thread(target=task1)
-company_thread = threading.Thread(target=company_thread(CSV_INPUT))
-thread3 = threading.Thread(target=task3)
+_thread1 = threading.Thread(target=task1)
+# I assume that we want to get by country
+_company_thread = threading.Thread(target=company_thread(CSV_INPUT, 'united states'))
+_thread3 = threading.Thread(target=task3)
 
-thread1.start()
-company_thread.start()
-thread3.start()
+_thread1.start()
+_company_thread.start()
+_thread3.start()

@@ -10,6 +10,12 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
+# Install playwright
+
+```
+playwright install
+```
+
 # Install Pre-commit (Optional)
 
 ```
