@@ -19,7 +19,8 @@ print("Starting threads")
 CSV_INPUT = "companies_input.csv"
 
 _thread1 = threading.Thread(target=task1)
-_company_thread = threading.Thread(target=company_thread(CSV_INPUT))
+# I assume that we want to get by country
+_company_thread = threading.Thread(target=company_thread(CSV_INPUT, 'united states'))
 _thread3 = threading.Thread(target=task3)
 
 _thread1.start()

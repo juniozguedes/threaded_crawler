@@ -5,38 +5,10 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from app.exceptions import CustomException, ValidationException
+import re
+
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-
-def google_search(query):
-    url = f"https://www.google.com/search?q={query}+linkedin"
-    pattern = f"company/{query}"
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Find all <a> (anchor) tags in the parsed HTML
-        links = soup.find_all("a")
-
-        # Iterate through the links and check for the pattern
-        for link in links:
-            href = link.get("href")
-            if href and pattern in href:
-                # Find the index of "https://"
-                start_index = href.find("https://")
-
-                # Find the index of the query string
-                end_index = href.find(query) + len(query)
-
-                # Extract the desired substring
-                desired_link = href[start_index:end_index]
-        return desired_link
-    print("Failed to retrieve search results.")
-    return False
-
 
 def read_csv_file(file_path):
     print(f"Reading csv file {file_path}")
@@ -64,23 +36,43 @@ def list_to_csv(_list, csv_file_path):
             csv_writer.writerow([url])
 
 
+def google_search(query):
+    with sync_playwright() as play:
+        browser = play.chromium.launch(headless=False)
+        page = browser.new_page()
+        page.goto('https://google.com')
+        breakpoint()
+        search_bar = page.query_selector('textarea')
+        if search_bar.is_visible():
+            search_bar.fill(query)
+        employee_element = page.query_selector('a.face-pile__cta')
+        numbers = re.findall(r'\d{1,3}(?:,\d{3})*(?:\.\d+)?', employee_element.inner_text())
+        return numbers[0]
+
+
+
 def get_employee_count(linkedin_url):
     with sync_playwright() as play:
-        browser = play.chromium.launch()
+        browser = play.chromium.launch(headless=False)
         page = browser.new_page()
         page.goto(linkedin_url)
-        span = page.locator('xpath=//*[@id="ember29"]/span')
-        print(span)
-        time.sleep(2)
-        return True
+        time.sleep(3)
+        breakpoint()
+        dismiss_button = page.query_selector('button.modal__dismiss')
+        if dismiss_button.is_visible():
+            dismiss_button.click()
+        employee_element = page.query_selector('a.face-pile__cta')
+        numbers = re.findall(r'\d{1,3}(?:,\d{3})*(?:\.\d+)?', employee_element.inner_text())
+        return numbers[0]
 
 
-def company_thread(csv_input):
+def company_thread(csv_input, country):
     print("Running company csv thread")
     companies_list = read_csv_file(csv_input)
     linkedin_urls = []
     for company in companies_list:
-        company_linkedin = google_search(company)
+        query = f"{company}+{country}"
+        company_linkedin = google_search(query)
         linkedin_urls.append(company_linkedin)
 
     csv_file_path = "companies_output.csv"
