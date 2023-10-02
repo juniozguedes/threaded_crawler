@@ -1,15 +1,14 @@
-import csv
 import os
+import re
+import csv
 import time
-import requests
-from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright, Page
 
 from app.exceptions import CustomException, ValidationException
-import re
 
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 def read_csv_file(file_path):
     print(f"Reading csv file {file_path}")
@@ -37,55 +36,61 @@ def list_to_csv(_list, csv_file_path):
             csv_writer.writerow([url])
 
 
-def google_first_result(page: Page, query:str):
-    page.goto('https://google.com')
-    search_bar = page.query_selector('textarea')
+def google_first_link(page: Page, query: str):
+    page.goto("https://google.com")
+    search_bar = page.query_selector("textarea")
     if search_bar.is_visible():
         search_bar.fill(query)
-        breakpoint()
+        # Simulate pressing the "Enter" key
+        page.keyboard.press("Enter")
+        time.sleep(1)
+        results_list = page.query_selector_all("div.MjjYud")
+        # Assuming div_element is the div element you want to work with
+        a_tag_handle = results_list[0].query_selector("a:first-child")
 
-def get_employee_count(linkedin_url):
+        # Get the href attribute of the first A tag
+        href = a_tag_handle.get_attribute("href")
+        return href
+    return "NA"
+
+
+def get_employee_count(page: Page, linkedin_url: str):
+    page.goto(linkedin_url)
+    time.sleep(1)
+    dismiss_button = page.query_selector("button.modal__dismiss")
+    if dismiss_button.is_visible():
+        dismiss_button.click()
+    employee_element = page.query_selector("a.face-pile__cta")
+    numbers = re.findall(r"\d{1,3}(?:,\d{3})*(?:\.\d+)?", employee_element.inner_text())
+    return numbers[0]
+
+
+def linkedin_scrapper(company: str, country: str):
     with sync_playwright() as play:
         browser = play.chromium.launch(headless=False)
         page = browser.new_page()
-        page.goto(linkedin_url)
-        time.sleep(3)
-        breakpoint()
-        dismiss_button = page.query_selector('button.modal__dismiss')
-        if dismiss_button.is_visible():
-            dismiss_button.click()
-        employee_element = page.query_selector('a.face-pile__cta')
-        numbers = re.findall(r'\d{1,3}(?:,\d{3})*(?:\.\d+)?', employee_element.inner_text())
-        return numbers[0]
 
+        query = f"linkedin+{company}+{country}"
+        company_page = google_first_link(page, query)
+        employee_count = get_employee_count(page, company_page)
+        browser.close()
+        return {"url": company_page, "employee_count": employee_count}
 
-def linkedin_scrapper(query: str):
-    with sync_playwright() as play:
-        browser = play.chromium.launch(headless=False)
-        page = browser.new_page()
-        breakpoint()
-        print(type(page))
-        company_page = google_first_result(page, query)        
 
 def company_thread(csv_input, country):
     print("Running company csv thread")
     companies_list = read_csv_file(csv_input)
-    linkedin_urls = []
+    final_result = []
+    urls = []
     for company in companies_list:
-        query = f"{company}+{country}"
-        linkedin_results = linkedin_scrapper(query)
-        company_linkedin = google_search(query)
-        linkedin_urls.append(company_linkedin)
+        scrapper_data = linkedin_scrapper(company, country)
+        urls.append(scrapper_data["url"])
+        final_result.append(scrapper_data)
 
+    # Output CSV with companies url's
     csv_file_path = "companies_output.csv"
-    list_to_csv(linkedin_urls, csv_file_path)
+    list_to_csv(urls, csv_file_path)
 
     print(f"URLs have been saved to {csv_file_path}")
 
-    employee_count_list = []
-    for linkedin_url in linkedin_urls:
-        employee_count = get_employee_count(linkedin_url)
-        employee_count_list.append(
-            {"url": linkedin_url, "employee_count": employee_count}
-        )
-    print(employee_count_list)
+    print(f"Final result {final_result}")
