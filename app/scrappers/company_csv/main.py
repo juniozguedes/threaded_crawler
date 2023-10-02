@@ -3,7 +3,8 @@ import os
 import time
 import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Page
+
 from app.exceptions import CustomException, ValidationException
 import re
 
@@ -36,20 +37,12 @@ def list_to_csv(_list, csv_file_path):
             csv_writer.writerow([url])
 
 
-def google_search(query):
-    with sync_playwright() as play:
-        browser = play.chromium.launch(headless=False)
-        page = browser.new_page()
-        page.goto('https://google.com')
+def google_first_result(page: Page, query:str):
+    page.goto('https://google.com')
+    search_bar = page.query_selector('textarea')
+    if search_bar.is_visible():
+        search_bar.fill(query)
         breakpoint()
-        search_bar = page.query_selector('textarea')
-        if search_bar.is_visible():
-            search_bar.fill(query)
-        employee_element = page.query_selector('a.face-pile__cta')
-        numbers = re.findall(r'\d{1,3}(?:,\d{3})*(?:\.\d+)?', employee_element.inner_text())
-        return numbers[0]
-
-
 
 def get_employee_count(linkedin_url):
     with sync_playwright() as play:
@@ -66,12 +59,21 @@ def get_employee_count(linkedin_url):
         return numbers[0]
 
 
+def linkedin_scrapper(query: str):
+    with sync_playwright() as play:
+        browser = play.chromium.launch(headless=False)
+        page = browser.new_page()
+        breakpoint()
+        print(type(page))
+        company_page = google_first_result(page, query)        
+
 def company_thread(csv_input, country):
     print("Running company csv thread")
     companies_list = read_csv_file(csv_input)
     linkedin_urls = []
     for company in companies_list:
         query = f"{company}+{country}"
+        linkedin_results = linkedin_scrapper(query)
         company_linkedin = google_search(query)
         linkedin_urls.append(company_linkedin)
 
