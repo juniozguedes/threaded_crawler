@@ -1,39 +1,12 @@
 import os
 import re
-import csv
 import time
 from playwright.sync_api import sync_playwright, Page
 
-from app.exceptions import CustomException, ValidationException
+from app.scrappers.common import CsvUtility
 
-
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-
-def read_csv_file(file_path):
-    print(f"Reading csv file {file_path}")
-    try:
-        with open(file_path, mode="r", newline="", encoding="utf-8") as file:
-            csv_reader = csv.reader(file)
-            result = []
-            for row in csv_reader:
-                result.append(row[0])
-            return result
-    except FileNotFoundError as err:
-        print(f"File not found: {file_path}")
-        message = err.args[1]
-        raise ValidationException(validation_message=message) from err
-    except Exception as exception:
-        print(f"An error occurred: {exception}")
-        raise CustomException("An error occurred", 500) from exception
-
-
-def list_to_csv(_list, csv_file_path):
-    with open(csv_file_path, mode="w", newline="", encoding="utf-8") as csv_file:
-        csv_writer = csv.writer(csv_file)
-        # Write each URL to a new row in the CSV file
-        for url in _list:
-            csv_writer.writerow([url])
+# Get the directory where main.py is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def google_first_link(page: Page, query: str):
@@ -67,7 +40,7 @@ def get_employee_count(page: Page, linkedin_url: str):
 
 def linkedin_scrapper(company: str, country: str):
     with sync_playwright() as play:
-        browser = play.chromium.launch(headless=False)
+        browser = play.chromium.launch()
         page = browser.new_page()
 
         query = f"linkedin+{company}+{country}"
@@ -77,9 +50,17 @@ def linkedin_scrapper(company: str, country: str):
         return {"url": company_page, "employee_count": employee_count}
 
 
-def company_thread(csv_input, country):
-    print("Running company csv thread")
-    companies_list = read_csv_file(csv_input)
+def company_thread(country: str):
+    """
+    This thread will call the orchestrator that scraps linkedin
+    """
+    print("Running company thread")
+
+    relative_path = "companies_input.csv"
+    csv_input = os.path.join(script_dir, relative_path)
+
+    csv_utility = CsvUtility()
+    companies_list = csv_utility.read_csv_file(csv_input)
     final_result = []
     urls = []
     for company in companies_list:
@@ -88,9 +69,11 @@ def company_thread(csv_input, country):
         final_result.append(scrapper_data)
 
     # Output CSV with companies url's
-    csv_file_path = "companies_output.csv"
-    list_to_csv(urls, csv_file_path)
+    relative_path = "companies_output.csv"
+    csv_output = os.path.join(script_dir, relative_path)
 
-    print(f"URLs have been saved to {csv_file_path}")
+    csv_utility.list_to_csv(urls, csv_output)
+
+    print(f"URLs have been saved to {csv_output}")
 
     print(f"Final result {final_result}")
