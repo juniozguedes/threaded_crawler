@@ -11,13 +11,60 @@ def get_review_data(page: Page, g2crowd_url: str):
     time.sleep(3)
     page.goto(g2crowd_url)
     time.sleep(5)
-    iframe_title = "Widget containing a Cloudflare security challenge"
     frame_one = page.wait_for_selector("iframe").content_frame()
     time.sleep(2)
     span = frame_one.wait_for_selector("input")
-    breakpoint()
     if span.is_visible():
         span.click()
+        time.sleep(3)
+    review_data = {}
+    product_name_tree = page.wait_for_selector("div.product-head__title")
+    # Execute JavaScript to get the inner text of the first <a> tag within product_name
+    product_name = page.evaluate(
+        "(element) => element.querySelector('a').innerText", product_name_tree
+    )
+    print(product_name)
+    pricing_cards = page.query_selector_all("a.preview-cards__card")
+    if pricing_cards.is_visible():
+        for a_tag in pricing_cards:
+            # Execute JavaScript to extract text content from the <a> tag
+            extracted_data = page.evaluate(
+                """(element) => {
+    const supportText = element.querySelector(".preview-cards__text").textContent;
+                const dollarUnit = element.querySelector(".money__unit").textContent;
+                const dollarValue = element.querySelector(".money__value").textContent;
+                const billingText = element.querySelector(
+                    ".preview-cards__text--fw-regular"
+                ).textContent;
+                return { supportText, dollarUnit, dollarValue, billingText };
+            }""",
+                a_tag,
+            )
+
+            pricing = {}
+            pricing["support_text"] = extracted_data["supportText"]
+            pricing["dollar_unit"] = extracted_data["dollarUnit"]
+            pricing["dollar_value"] = extracted_data["dollarValue"]
+            pricing["billing_text"] = extracted_data["billingText"]
+            review_data["pricing"] = pricing
+
+    # Rating part
+    # Locate the element by its CSS selector
+    rating_element = page.query_selector("span.c-midnight-90.pl-4th")
+
+    if rating_element:
+        # Execute JavaScript to extract the complete rating information
+        complete_rating = page.evaluate(
+            """(element) => {
+            return element.textContent.trim();
+        }""",
+            rating_element,
+        )
+
+        # Now, complete_rating contains the extracted complete rating (e.g., "4.3 out of 5")
+        print("Complete Rating:", complete_rating)
+    else:
+        print("Rating element not found")
     return "NA"
 
 
@@ -26,15 +73,10 @@ def g2crowd_scrapper(url: str):
         time.sleep(2)
         browser = play.chromium.launch(headless=False, devtools=True)
         time.sleep(3)
-        context = browser.new_context();
-        page = context.new_page();
-        
-        page.set_extra_http_headers({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9'
-        });
+        context = browser.new_context()
+        page = context.new_page()
+
         time.sleep(1)
-        print(play)
         review_data = get_review_data(page, url)
         print(review_data)
         return True
