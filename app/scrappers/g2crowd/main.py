@@ -9,25 +9,20 @@ from app.scrappers.common import CsvUtility
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-def get_review_data(page: Page, g2crowd_url: str):
-    page.goto(g2crowd_url)
+def bypass_cloudfare(page: Page):
     frame_one = page.wait_for_selector("iframe").content_frame()
     span = frame_one.wait_for_selector("input")
     if span.is_visible():
         span.click()
         time.sleep(2)
-    review_data = {"reviews": []}
+        return True
+    return None
 
-    # PRODUCT PART ###
-    product_name_tree = page.wait_for_selector("div.product-head__title")
-    product_name = page.evaluate(
-        "(element) => element.querySelector('a').innerText", product_name_tree
-    )
-    review_data["product_name"] = product_name
 
-    # PRICING PART ###
+def get_review_pricing(page: Page):
     pricing_cards = page.query_selector_all("a.preview-cards__card")
     if pricing_cards[0].is_visible():
+        pricing = []
         for a_tag in pricing_cards:
             # Execute JavaScript to extract text content from the <a> tag
             extracted_data = page.evaluate(
@@ -43,14 +38,17 @@ def get_review_data(page: Page, g2crowd_url: str):
                 a_tag,
             )
 
-            pricing = {}
-            pricing["support_text"] = extracted_data["supportText"]
-            pricing["dollar_unit"] = extracted_data["dollarUnit"]
-            pricing["dollar_value"] = extracted_data["dollarValue"]
-            pricing["billing_text"] = extracted_data["billingText"]
-            review_data["pricing"] = pricing
+            current_card = {}
+            current_card["support_text"] = extracted_data["supportText"]
+            current_card["dollar_unit"] = extracted_data["dollarUnit"]
+            current_card["dollar_value"] = extracted_data["dollarValue"]
+            current_card["billing_text"] = extracted_data["billingText"]
+            pricing.append(current_card)
+        return pricing
+    return None
 
-    # RATING PART ###
+
+def get_review_rating(page: Page):
     rating_element = page.query_selector("span.c-midnight-90.pl-4th")
 
     if rating_element:
@@ -63,9 +61,11 @@ def get_review_data(page: Page, g2crowd_url: str):
         )
 
         print("Complete Rating:", complete_rating)
-        review_data["rating"] = rating_element
+        return rating_element
+    return None
 
-    # USER REVIEWS PART ###
+
+def get_users_reviews(page: Page):
     itemtype = "http://schema.org/Review"
     itemprop = "review"
 
@@ -75,6 +75,7 @@ def get_review_data(page: Page, g2crowd_url: str):
     )
     count = review_elements.count()
     if review_elements:
+        user_reviews = []
         for i in range(count):
             review = {}
             review_element = review_elements.nth(i)
@@ -94,21 +95,52 @@ def get_review_data(page: Page, g2crowd_url: str):
             if reviewer_info_elements:
                 reviewer_info_element = reviewer_info_elements[0]
                 reviewer_info = reviewer_info_element.inner_text().strip()
-                company_start = reviewer_info.find(
-                    "("
-                )  # Find the start of the company information
-                if company_start != -1:
-                    raw_reviewer_info = reviewer_info[:company_start].strip()
-                    role, company_size = raw_reviewer_info.split("\n")
-                    review["role"] = role
-                    review["company_size"] = company_size
-                    review["employeers"] = reviewer_info[company_start:].strip()
 
-            review["reviewer_name"] = reviewer_name
-            review_data["reviews"].append(review)
+                # Split the string by the newline character '\n'
+                info_parts = reviewer_info.split("\n")
 
-    else:
-        print("No review elements found")
+                # Check if we have at least two parts
+                if len(info_parts) >= 2:
+                    role = info_parts[0]  # 'Co-Founder & CEO'
+                    company_size = info_parts[1]  # 'Mid-Market(51-1000 emp.)'
+                else:
+                    role = reviewer_info  # If there's only one part, consider it as the role
+                    company_size = (
+                        None  # Set company_size to None or another default value
+                    )
+
+                review["reviewer_name"] = reviewer_name
+                review["role"] = role
+                review["company_size"] = company_size
+                user_reviews.append(review)
+        return user_reviews
+    return None
+
+
+def get_review_data(page: Page, g2crowd_url: str):
+    page.goto(g2crowd_url)
+    bypass_cloudfare(page)
+
+    review_data = {"reviews": []}
+
+    # PRODUCT PART ###
+    product_name_tree = page.wait_for_selector("div.product-head__title")
+    product_name = page.evaluate(
+        "(element) => element.querySelector('a').innerText", product_name_tree
+    )
+    review_data["product_name"] = product_name
+
+    # PRICING PART ###
+    pricing = get_review_pricing(page)
+    review_data["pricing"] = pricing
+
+    # RATING PART ###
+    rating = get_review_rating(page)
+    review_data["rating"] = rating
+
+    # USER REVIEWS PART ###
+    user_reviews = get_users_reviews(page)
+    review_data["user_reviews"] = user_reviews
     return review_data
 
 
