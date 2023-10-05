@@ -25,7 +25,7 @@ def get_review_data(page: Page, g2crowd_url: str):
     )
     print(product_name)
     pricing_cards = page.query_selector_all("a.preview-cards__card")
-    if pricing_cards.is_visible():
+    if pricing_cards[0].is_visible():
         for a_tag in pricing_cards:
             # Execute JavaScript to extract text content from the <a> tag
             extracted_data = page.evaluate(
