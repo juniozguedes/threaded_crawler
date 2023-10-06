@@ -132,15 +132,15 @@ def get_users_reviews(page: Page):
                 ).all()
 
                 like_list = [paragraph.inner_text() for paragraph in like_paragraphs]
-                dislike_list = [paragraph.inner_text() for paragraph in dislike_paragraphs]
+                dislike_list = [
+                    paragraph.inner_text() for paragraph in dislike_paragraphs
+                ]
 
                 for i, text in enumerate(like_list):
                     like_texts.append(text)
 
                 for i, text in enumerate(dislike_list):
                     dislike_texts.append(text)
-
-
 
             review["reviewer_name"] = reviewer_name
             review["role"] = role
@@ -151,7 +151,6 @@ def get_users_reviews(page: Page):
                 "dislike_texts": dislike_texts,
             }
             user_reviews.append(review)
-        breakpoint()
         return user_reviews
     return None
 
@@ -180,6 +179,7 @@ def get_review_data(page: Page, g2crowd_url: str):
     # USER REVIEWS PART ###
     user_reviews = get_users_reviews(page)
     review_data["user_reviews"] = user_reviews
+
     return review_data
 
 
@@ -212,7 +212,7 @@ def crowd2url_thread():
         final_result.append(scrapper_data)
 
     # Output json with data review
-
     print("Json have been saved")
 
     print(f"Final result {final_result}")
+    return final_result
