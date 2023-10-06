@@ -1,28 +1,30 @@
+import logging
 import threading
 from flask import Flask
 
-from app.config import Config as config_class
+from app.config import Config as config_class, start_logger
 from app.exceptions import CustomException, handle_custom_exception
-from app.extensions import ma
 
-from app.scrappers.company_csv.main import company_thread
-from app.scrappers.g2crowd.main import task3
-from app.scrappers.google_drive.main import task1
+from app.scrappers.company_csv.main import company_orchestrator
+from app.scrappers.g2crowd.main import g2crowd_orchestrator
+
 
 app = Flask(__name__)
 app.config.from_object(config_class)
+start_logger()
+
+logging.info("Starting application")
 
 app.register_error_handler(CustomException, handle_custom_exception)
-ma.init_app(app)
 
-print("Starting threads")
-CSV_INPUT = "companies_input.csv"
+logging.info("Starting threads")
 
-_thread1 = threading.Thread(target=task1)
-# I assume that we want to get by country
-_company_thread = threading.Thread(target=company_thread(CSV_INPUT, 'united states'))
-_thread3 = threading.Thread(target=task3)
+company_thread = threading.Thread(
+    target=company_orchestrator,
+    args=("united states", "companies_input.csv"),
+    name="CompanyThread",
+)
+crowd2url_thread = threading.Thread(target=g2crowd_orchestrator, name="Crowd2UrlThread")
 
-_thread1.start()
-_company_thread.start()
-_thread3.start()
+company_thread.start()
+crowd2url_thread.start()
