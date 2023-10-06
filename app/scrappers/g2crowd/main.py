@@ -86,6 +86,8 @@ def get_users_reviews(page: Page):
             if link_locator.count() > 0:
                 # Get the content inside the <a> tag
                 reviewer_name = link_locator.inner_text()
+            else:
+                reviewer_name = None
 
             # Reviewer role and company
             reviewer_info_locator = review_element.locator(
@@ -108,11 +110,39 @@ def get_users_reviews(page: Page):
                     company_size = (
                         None  # Set company_size to None or another default value
                     )
+            # User reviews
+            user_review_header = review_element.locator("h3.m-0")
 
-                review["reviewer_name"] = reviewer_name
-                review["role"] = role
-                review["company_size"] = company_size
-                user_reviews.append(review)
+            user_review_element = review_element.locator('div[itemprop="reviewBody"]')
+            like_heading = user_review_element.locator(
+                'h5:has-text("What do you like best about Zendesk Support Suite?")'
+            )
+            dislike_heading = user_review_element.locator(
+                'h5:has-text("What do you dislike about Zendesk Support Suite?")'
+            )
+
+            # Extract the text content from the headings' siblings (the paragraphs)
+            if like_heading and dislike_heading:
+                like_text = like_heading.locator(
+                    "xpath=following-sibling::div[1]/p"
+                ).inner_text()
+                dislike_text = dislike_heading.locator(
+                    "xpath=following-sibling::div[1]/p"
+                ).inner_text()
+
+                print("What do you like best:", like_text)
+                print("What do you dislike:", dislike_text)
+
+            review["user_review"] = {
+                "header": user_review_header,
+                "like_text": like_text,
+                # "dislike": dislike,
+            }
+
+            review["reviewer_name"] = reviewer_name
+            review["role"] = role
+            review["company_size"] = company_size
+            user_reviews.append(review)
         return user_reviews
     return None
 
