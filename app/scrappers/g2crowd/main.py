@@ -111,8 +111,7 @@ def get_users_reviews(page: Page):
                         None  # Set company_size to None or another default value
                     )
             # User reviews
-            user_review_header = review_element.locator("h3.m-0")
-
+            user_review_header = review_element.locator("h3.m-0").inner_text()
             user_review_element = review_element.locator('div[itemprop="reviewBody"]')
             like_heading = user_review_element.locator(
                 'h5:has-text("What do you like best about Zendesk Support Suite?")'
@@ -121,28 +120,38 @@ def get_users_reviews(page: Page):
                 'h5:has-text("What do you dislike about Zendesk Support Suite?")'
             )
 
+            like_texts = []
+            dislike_texts = []
             # Extract the text content from the headings' siblings (the paragraphs)
             if like_heading and dislike_heading:
-                like_text = like_heading.locator(
+                like_paragraphs = like_heading.locator(
                     "xpath=following-sibling::div[1]/p"
-                ).inner_text()
-                dislike_text = dislike_heading.locator(
+                ).all()
+                dislike_paragraphs = dislike_heading.locator(
                     "xpath=following-sibling::div[1]/p"
-                ).inner_text()
+                ).all()
 
-                print("What do you like best:", like_text)
-                print("What do you dislike:", dislike_text)
+                like_list = [paragraph.inner_text() for paragraph in like_paragraphs]
+                dislike_list = [paragraph.inner_text() for paragraph in dislike_paragraphs]
 
-            review["user_review"] = {
-                "header": user_review_header,
-                "like_text": like_text,
-                # "dislike": dislike,
-            }
+                for i, text in enumerate(like_list):
+                    like_texts.append(text)
+
+                for i, text in enumerate(dislike_list):
+                    dislike_texts.append(text)
+
+
 
             review["reviewer_name"] = reviewer_name
             review["role"] = role
             review["company_size"] = company_size
+            review["user_review"] = {
+                "header": user_review_header,
+                "like_texts": like_texts,
+                "dislike_texts": dislike_texts,
+            }
             user_reviews.append(review)
+        breakpoint()
         return user_reviews
     return None
 
