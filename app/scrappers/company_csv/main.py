@@ -63,7 +63,7 @@ def linkedin_scrapper(company: str, country: str):
         return {"url": company_page, "employee_count": employee_count}
 
 
-def company_thread(country: str):
+def company_thread(country: str, relative_path: str):
     """
     This thread will call the orchestrator that scraps linkedin
     Outputs: companies_output.csv with all company url's

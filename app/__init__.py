@@ -28,8 +28,13 @@ logging.info("Starting threads")
 # _thread1 = threading.Thread(target=task1)
 
 # I assume that we want to get linkedin results by country
-_company_thread = threading.Thread(target=company_thread("united states"))
-_crowd2url_thread = threading.Thread(target=crowd2url_thread())
+_company_thread = threading.Thread(
+    target=company_thread,
+    args=("united states", "companies_input.csv"),
+    name="CompanyThread",
+)
+_crowd2url_thread = threading.Thread(target=crowd2url_thread, name="Crowd2UrlThread")
+
 
 # _thread1.start()
 _company_thread.start()
