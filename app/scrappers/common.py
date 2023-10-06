@@ -28,6 +28,7 @@ class CsvUtility:
                 csv_writer = csv.writer(csv_file)
                 for url in _list:
                     csv_writer.writerow([url])
+                logging.info("Converted list has been saved to %s", file_path)
         except FileNotFoundError as err:
             logging.error("File not found: %s, file_path", file_path)
             message = err.args[1]

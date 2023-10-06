@@ -2,40 +2,29 @@ import logging
 import threading
 from flask import Flask
 
-from app.config import Config as config_class
+from app.config import Config as config_class, start_logger
 from app.exceptions import CustomException, handle_custom_exception
 
-from app.scrappers.company_csv.main import company_thread
-from app.scrappers.g2crowd.main import crowd2url_thread
-from app.scrappers.google_drive.main import task1
+from app.scrappers.company_csv.main import company_orchestrator
+from app.scrappers.g2crowd.main import g2crowd_orchestrator
 
 
 app = Flask(__name__)
 app.config.from_object(config_class)
+start_logger()
 
-logging.basicConfig(
-    # filename="scrapper.log",
-    level=logging.INFO,
-    format="%(levelname)s %(message)s %(asctime)s ",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 logging.info("Starting application")
 
 app.register_error_handler(CustomException, handle_custom_exception)
 
 logging.info("Starting threads")
 
-# _thread1 = threading.Thread(target=task1)
-
-# I assume that we want to get linkedin results by country
-_company_thread = threading.Thread(
-    target=company_thread,
+company_thread = threading.Thread(
+    target=company_orchestrator,
     args=("united states", "companies_input.csv"),
     name="CompanyThread",
 )
-_crowd2url_thread = threading.Thread(target=crowd2url_thread, name="Crowd2UrlThread")
+crowd2url_thread = threading.Thread(target=g2crowd_orchestrator, name="Crowd2UrlThread")
 
-
-# _thread1.start()
-_company_thread.start()
-_crowd2url_thread.start()
+company_thread.start()
+crowd2url_thread.start()

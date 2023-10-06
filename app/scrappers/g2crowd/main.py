@@ -2,6 +2,8 @@
 
 import os
 import time
+import json
+import logging
 from playwright.sync_api import sync_playwright, Page
 from app.scrappers.common import CsvUtility
 
@@ -10,6 +12,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def bypass_cloudfare(page: Page):
+    logging.info("Bypassing cloudfare")
     frame_one = page.wait_for_selector("iframe").content_frame()
     span = frame_one.wait_for_selector("input")
     if span.is_visible():
@@ -20,6 +23,7 @@ def bypass_cloudfare(page: Page):
 
 
 def get_review_pricing(page: Page):
+    logging.info("Getting g2crowd pricing review")
     pricing_cards = page.query_selector_all("a.preview-cards__card")
     if pricing_cards[0].is_visible():
         pricing = []
@@ -49,6 +53,7 @@ def get_review_pricing(page: Page):
 
 
 def get_review_rating(page: Page):
+    logging.info("Getting g2crowd review rating")
     rating_element = page.query_selector("span.c-midnight-90.pl-4th")
 
     if rating_element:
@@ -59,13 +64,12 @@ def get_review_rating(page: Page):
         }""",
             rating_element,
         )
-
-        print("Complete Rating:", complete_rating)
-        return rating_element
+        return complete_rating
     return None
 
 
 def get_users_reviews(page: Page):
+    logging.info("Getting g2crowd first page user review")
     itemtype = "http://schema.org/Review"
     itemprop = "review"
 
@@ -156,10 +160,14 @@ def get_users_reviews(page: Page):
 
 
 def get_review_data(page: Page, g2crowd_url: str):
+    """
+    This crawls the g2crowd dom in separated functions by review part
+    return: review_data with the json output
+    """
     page.goto(g2crowd_url)
     bypass_cloudfare(page)
 
-    review_data = {"reviews": []}
+    review_data = {}
 
     # PRODUCT PART ###
     product_name_tree = page.wait_for_selector("div.product-head__title")
@@ -185,23 +193,28 @@ def get_review_data(page: Page, g2crowd_url: str):
 
 def g2crowd_scrapper(url: str):
     with sync_playwright() as play:
+        logging.info("Starting g2crowd scrapper for %s", url)
         time.sleep(2)
-        browser = play.chromium.launch(headless=False, devtools=True)
-        time.sleep(3)
-        context = browser.new_context()
-        page = context.new_page()
+        try:
+            browser = play.chromium.launch(headless=False, devtools=True)
+            context = browser.new_context()
+            page = context.new_page()
+            time.sleep(1)
+            review_data = get_review_data(page, url)
+            return review_data
+        except Exception as exception:
+            logging.error("An error occurred: %s", exception)
+            return None
 
-        time.sleep(1)
-        review_data = get_review_data(page, url)
-        return review_data
 
-
-def crowd2url_thread():
+def g2crowd_orchestrator():
     """
-    This thread will call the orchestrator that scraps g2crowd
+    This function will call the orchestrator that scraps g2crowd
+    Output: g2crowd_output.json with all review data
+    return: final_result with g2crowd review info as json
     """
-    print("Running g2crowd thread")
-
+    logging.info("Running g2crowd thread")
+    start_time = time.time()
     relative_path = "g2crowd_input.csv"
     csv_input = os.path.join(script_dir, relative_path)
     csv_utility = CsvUtility()
@@ -211,8 +224,18 @@ def crowd2url_thread():
         scrapper_data = g2crowd_scrapper(url)
         final_result.append(scrapper_data)
 
-    # Output json with data review
-    print("Json have been saved")
+    # Output JSON with review data
+    relative_path = "g2crowd_output.json"
+    json_output = os.path.join(script_dir, relative_path)
 
-    print(f"Final result {final_result}")
+    # Use json.dump() to write the data to a JSON file
+    with open(json_output, "w", encoding="utf-8") as json_file:
+        json.dump(final_result, json_file, indent=4)
+
+    logging.info("Data has been written to %s", json_output)
+
+    # Calculate the elapsed time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logging.info("TIME TO EXECUTE G2CROWD_ORCHESTRATOR: %s", elapsed_time)
     return final_result
