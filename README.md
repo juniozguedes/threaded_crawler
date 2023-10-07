@@ -6,11 +6,28 @@ python -m venv venv
 
 # Install requirements
 
+Windows:
+
 ```
+.\venv\Scripts\pip.exe install -r requirements.txt
+```
+
+Linux:
+
+```
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 # Install playwright
+
+Windows:
+
+```
+.\venv\Scripts\playwright install
+```
+
+Linux:
 
 ```
 playwright install
@@ -34,12 +51,4 @@ To check pre-commit status:
 
 ```
  pre-commit run --all-files
-```
-
-# Freezing requirements with venv
-
-Might change depending on the OS, but the idea is to freeze requirements starting from the pip inside venv folder:
-
-```
- .\venv\Scripts\pip3 freeze > requirements.txt
 ```
