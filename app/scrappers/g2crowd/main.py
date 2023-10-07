@@ -25,6 +25,8 @@ def bypass_cloudfare(page: Page):
 def get_review_pricing(page: Page):
     logging.info("Getting g2crowd pricing review")
     pricing_cards = page.query_selector_all("a.preview-cards__card")
+    if not pricing_cards:
+        return None
     if pricing_cards[0].is_visible():
         pricing = []
         for a_tag in pricing_cards:
@@ -117,11 +119,9 @@ def get_users_reviews(page: Page):
             # User reviews
             user_review_header = review_element.locator("h3.m-0").inner_text()
             user_review_element = review_element.locator('div[itemprop="reviewBody"]')
-            like_heading = user_review_element.locator(
-                'h5:has-text("What do you like best about Zendesk Support Suite?")'
-            )
+            like_heading = user_review_element.locator("text=What do you like best")
             dislike_heading = user_review_element.locator(
-                'h5:has-text("What do you dislike about Zendesk Support Suite?")'
+                "text=What do you dislike about"
             )
 
             like_texts = []
