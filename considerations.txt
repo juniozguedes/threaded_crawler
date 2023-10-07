@@ -1,0 +1,31 @@
+Choosen Framework/Tech:
+# Flask is the scope framework
+# It scales in any means so I'm considering all scenarios in which this application can scale
+# Flask framework seems like the perfect option for it to scale, mutate, maybe make use of Jinja or any other presentation scenario
+# Linters and pre-commit hooks Keeps code quality at it's finest avoiding mistakes also improving commit culture
+---
+
+Scenario 2 (companies csv):
+# I google the company name+linkedin+country and get the url from pattern saving in companies_output.csv, also returning employee count:
+# I scrapped using google search because it's trustable with high availability and linkedin requires login to search on itself
+# I did not mount the linkedin company url hardcoded as in linkedin/company/{name} because we cannot make assumptions on page name
+
+---
+
+Scenario 3 (g2crowd):
+# I covered the most important aspects of the review page including the first page of user reviews
+# The fields that does not exists or does not apply such as pricing for Azure are listed with "None" on the g2crowd_output.json
+# Cloudfare is being bypassed
+# I tried isolating in the most steps that I could to keep code readable and maintanable
+
+---
+
+Regarding playwright:
+# I focused on always use locators as it's recommended by the documentation
+# In some scenarios I used query selector for the sake of speed on development (I know it's not recommended)
+
+
+IMPROVEMENTS TO BE DONE:
+# Make heavy use of typing tools such as pydantic or dataclasses to ease development and cover data types
+# Heavy test g2crowd to see if there are any failing scenarios not being covered on scrapper
+# 3 days of next sprint will be needed to wrap google_drive module

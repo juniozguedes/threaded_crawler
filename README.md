@@ -33,22 +33,24 @@ Linux:
 playwright install
 ```
 
-# Install Pre-commit (Optional)
-
-```
-pre-commit install
-```
-
 # Run the project
 
 ```
 flask run
 ```
 
-# Linter checking
-
-To check pre-commit status:
+# Where to check outputs:
 
 ```
- pre-commit run --all-files
+company_csv module:
+A CSV with the urls will be generated at scrappers > company_csv > companies_output.csv
+
+Also the function will print the urls and the employee count as requested
+```
+
+```
+g2crowd module:
+A JSON with the review data will be generated at scrappers > g2crowd > g2crowd_output.json
+
+Also the function will print significant steps and data about the scrapping
 ```
