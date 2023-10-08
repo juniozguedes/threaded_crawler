@@ -52,5 +52,5 @@ Also the function will print the urls and the employee count as requested
 g2crowd module:
 A JSON with the review data will be generated at scrappers > g2crowd > g2crowd_output.json
 
-Also the function will print significant steps and data about the scrapping
+Also the function will print significant steps/data about the scrapping
 ```

@@ -1,7 +1,7 @@
 Choosen Framework/Tech:
 # Flask is the scope framework
 # It scales in any means so I'm considering all scenarios in which this application can scale
-# Flask framework seems like the perfect option for it to scale, mutate, maybe make use of Jinja or any other presentation scenario
+# Flask framework can mutate to different presentation scenarios (Templates for example)
 # Linters and pre-commit hooks Keeps code quality at it's finest avoiding mistakes also improving commit culture
 ---
 
@@ -27,5 +27,4 @@ Regarding playwright:
 
 IMPROVEMENTS TO BE DONE:
 # Make heavy use of typing tools such as pydantic or dataclasses to ease development and cover data types
-# Heavy test g2crowd to see if there are any failing scenarios not being covered on scrapper
 # 3 days of next sprint will be needed to wrap google_drive module
