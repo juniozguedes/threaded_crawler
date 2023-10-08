@@ -5,7 +5,7 @@ import time
 import json
 import logging
 from playwright.sync_api import sync_playwright, Page
-from app.scrappers.common import CsvUtility
+from app.scrappers.common import CsvUtility, PlaywrightUtility
 
 # Get the directory where main.py is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,32 +23,30 @@ def bypass_cloudfare(page: Page):
 
 
 def get_review_pricing(page: Page):
-    logging.info("Getting g2crowd pricing review")
-    pricing_cards = page.query_selector_all("a.preview-cards__card")
-    if not pricing_cards:
-        return None
-    if pricing_cards[0].is_visible():
+    logging.info("Getting g2crowd review pricing")
+    pw_utility = PlaywrightUtility()
+    # Use Playwright's locator to find the element
+    pricing_elements = page.locator('//a[@class="c-midnight-80 preview-cards__card"]')
+    count = pricing_elements.count()
+    if pricing_elements:
         pricing = []
-        for a_tag in pricing_cards:
-            # Execute JavaScript to extract text content from the <a> tag
-            extracted_data = page.evaluate(
-                """(element) => {
-    const supportText = element.querySelector(".preview-cards__text").textContent;
-                const dollarUnit = element.querySelector(".money__unit").textContent;
-                const dollarValue = element.querySelector(".money__value").textContent;
-                const billingText = element.querySelector(
-                    ".preview-cards__text--fw-regular"
-                ).textContent;
-                return { supportText, dollarUnit, dollarValue, billingText };
-            }""",
-                a_tag,
+        for i in range(count):
+            current_card = {}
+            pricing_element = pricing_elements.nth(i)
+
+            support_text = pw_utility.locate_text(
+                pricing_element, "span.preview-cards__text"
+            )
+            dollar_unit = pw_utility.locate_text(pricing_element, "span.money__unit")
+            dollar_value = pw_utility.locate_text(pricing_element, "span.money__value")
+            billing_text = pw_utility.locate_text(
+                pricing_element, ".preview-cards__text--fw-regular"
             )
 
-            current_card = {}
-            current_card["support_text"] = extracted_data["supportText"]
-            current_card["dollar_unit"] = extracted_data["dollarUnit"]
-            current_card["dollar_value"] = extracted_data["dollarValue"]
-            current_card["billing_text"] = extracted_data["billingText"]
+            current_card["support_text"] = support_text
+            current_card["dollar_unit"] = dollar_unit
+            current_card["dollar_value"] = dollar_value
+            current_card["billing_text"] = billing_text
             pricing.append(current_card)
         return pricing
     return None
@@ -141,10 +139,12 @@ def get_users_reviews(page: Page):
                 ]
 
                 for i, text in enumerate(like_list):
-                    like_texts.append(text)
+                    if text.strip():
+                        like_texts.append(text)
 
                 for i, text in enumerate(dislike_list):
-                    dislike_texts.append(text)
+                    if text.strip():
+                        dislike_texts.append(text)
 
             review["reviewer_name"] = reviewer_name
             review["role"] = role

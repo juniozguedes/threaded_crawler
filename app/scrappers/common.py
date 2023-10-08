@@ -3,6 +3,16 @@ import logging
 from app.exceptions import CustomException, ValidationException
 
 
+class PlaywrightUtility:
+    def locate_text(self, element, locator_string):
+        try:
+            element_locator = element.locator(locator_string)
+            element_text = element_locator.inner_text()
+        except Exception:
+            element_text = None
+        return element_text
+
+
 class CsvUtility:
     def read_csv_file(self, file_path: str):
         try:
