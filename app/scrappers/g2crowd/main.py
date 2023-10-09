@@ -25,7 +25,6 @@ def bypass_cloudfare(page: Page):
 def get_review_pricing(page: Page):
     logging.info("Getting g2crowd review pricing")
     pw_utility = PlaywrightUtility()
-    # Use Playwright's locator to find the element
     pricing_elements = page.locator('//a[@class="c-midnight-80 preview-cards__card"]')
     count = pricing_elements.count()
     if pricing_elements:
@@ -73,7 +72,6 @@ def get_users_reviews(page: Page):
     itemtype = "http://schema.org/Review"
     itemprop = "review"
 
-    # Use Playwright's locator to find the element
     review_elements = page.locator(
         f'//div[@itemtype="{itemtype}" and @itemprop="{itemprop}"]'
     )
