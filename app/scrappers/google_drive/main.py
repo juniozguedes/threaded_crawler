@@ -11,9 +11,14 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"]
 
-# Get the directory where main.py is located
+# Path hoisting
 script_dir = os.path.dirname(os.path.abspath(__file__))
 credentials_input = os.path.join(script_dir, "credentials.json")
+token_path = os.path.join(script_dir, "token.json")
+
+
+class GoogleDriveError(Exception):
+    pass
 
 
 def parse_natural_language_query(natural_query):
@@ -42,25 +47,26 @@ def parse_natural_language_query(natural_query):
 def google_credentials():
     logging.info("Getting google_drive credentials from credentials.json")
     creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    # Define the paths for credentials and token files in the same directory
-    token_path = os.path.join(script_dir, "token.json")
 
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(credentials_input, SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open(token_path, "w", encoding="utf-8") as token:
-            token.write(creds.to_json())
-    return creds
+    try:
+        if os.path.exists(token_path):
+            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    credentials_input, SCOPES
+                )
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open(token_path, "w", encoding="utf-8") as token:
+                token.write(creds.to_json())
+        return creds
+    except Exception as error:
+        error_message = "Failed to initialize Google Drive: credentials.json malformed"
+        raise GoogleDriveError(error_message) from error
 
 
 def get_driver_items(creds, parsed_query):
@@ -109,7 +115,12 @@ def google_drive_orchestrator(natural_query: str):
     return: query print/log
     """
     logging.info("Running google_drive thread")
-    creds = google_credentials()
-    parsed_query = parse_natural_language_query(natural_query)
-    items = get_driver_items(creds, parsed_query)
-    return items
+    try:
+        creds = google_credentials()
+        parsed_query = parse_natural_language_query(natural_query)
+        items = get_driver_items(creds, parsed_query)
+        return items
+    except GoogleDriveError as error:
+        logging.error("Google Drive error: %s", str(error))
+        # Stop the thread gracefully
+        return None
