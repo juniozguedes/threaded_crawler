@@ -1,3 +1,11 @@
+# In order to run the google drive API:
+
+```
+Rename .env-example to .env
+Populate .env with the correct environment variables for Google Drive
+
+```
+
 # Create venv
 
 ```

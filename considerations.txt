@@ -1,30 +1,43 @@
+---
 Choosen Framework/Tech:
 # Flask is the scope framework
 # It scales in any means so I'm considering all scenarios in which this application can scale
 # Flask framework can mutate to different presentation scenarios (Templates for example)
 # Linters and pre-commit hooks Keeps code quality at it's finest avoiding mistakes also improving commit culture
----
+# All scrappers are executed in parallel with threading, the entire application would not crash because of a single module
+# Time execution tracking, can be seen on terminal as "INFO TIME TO EXECUTE"
+# Separating responsabilities in each module directory, including input and output files
 
+---
+Scenario 1 (google drive):
+# I'm using environment variables to populate credentials.json on app startup
+# I'm doing basic select queries to retrieve either a file by filename or filecontent (or both in the same query)
+# Natural language query example that searches for a filename Currículo containing text Guedes:
+NATURAL_QUERY = "FILENAME Currículo, TEXT Guedes"
+# The correct file will be displayed as a log object in the terminal
+
+---
 Scenario 2 (companies csv):
 # I google the company name+linkedin+country and get the url from pattern saving in companies_output.csv, also returning employee count:
 # I scrapped using google search because it's trustable with high availability and linkedin requires login to search on itself
 # I did not mount the linkedin company url hardcoded as in linkedin/company/{name} because we cannot make assumptions on page name
 
 ---
-
 Scenario 3 (g2crowd):
 # I covered the most important aspects of the review page including the first page of user reviews
 # The fields that does not exists or does not apply such as pricing for Azure are listed with "None" on the g2crowd_output.json
 # Cloudfare is being bypassed
 # I tried isolating in the most steps that I could to keep code readable and maintanable
+# The final output with formatted reviews for each URL provided in g2crowd_input.csv is created at: g2crowd_output.json
 
 ---
-
 Regarding playwright:
 # I focused on always use locators as it's recommended by the documentation
 # In some scenarios I used query selector for the sake of speed on development (I know it's not recommended)
+# I left the headless=False in order to show the browser progress
 
-
+---
 IMPROVEMENTS TO BE DONE:
 # Make heavy use of typing tools such as pydantic or dataclasses to ease development and cover data types
-# 3 days of next sprint will be needed to wrap google_drive module
+# Maybe separate more step functions regarding the g2crowd scrapper for user_reviews
+# Completely abandon query_selector and work with locators only with playwright
