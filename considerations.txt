@@ -10,6 +10,7 @@ Choosen Framework/Tech:
 
 ---
 Scenario 1 (google drive):
+# I'm using environment variables to populate credentials.json on app startup
 # I'm doing basic select queries to retrieve either a file by filename or filecontent (or both in the same query)
 # Natural language query example that searches for a filename Currículo containing text Guedes:
 NATURAL_QUERY = "FILENAME Currículo, TEXT Guedes"

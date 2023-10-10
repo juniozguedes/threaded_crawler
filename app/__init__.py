@@ -2,7 +2,7 @@ import logging
 import threading
 from flask import Flask
 
-from app.config import Config as config_class, start_logger
+from app.config import Config as config_class, create_credentials_json, start_logger
 from app.exceptions import CustomException, handle_custom_exception
 from app.scrappers.company_csv.main import company_orchestrator
 from app.scrappers.g2crowd.main import g2crowd_orchestrator
@@ -12,6 +12,7 @@ from app.scrappers.google_drive.main import google_drive_orchestrator
 app = Flask(__name__)
 app.config.from_object(config_class)
 start_logger()
+create_credentials_json()
 
 logging.info("Starting application")
 
