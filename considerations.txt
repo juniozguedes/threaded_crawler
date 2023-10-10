@@ -3,6 +3,15 @@ Choosen Framework/Tech:
 # It scales in any means so I'm considering all scenarios in which this application can scale
 # Flask framework can mutate to different presentation scenarios (Templates for example)
 # Linters and pre-commit hooks Keeps code quality at it's finest avoiding mistakes also improving commit culture
+
+---
+
+Scenario 1 (google drive):
+# I'm doing basic select queries to retrieve either a file by filename or filecontent (or both in the same query)
+# Natural language query example that searches for a filename Currículo containing text Guedes:
+NATURAL_QUERY = "FILENAME Currículo, TEXT Guedes"
+
+
 ---
 
 Scenario 2 (companies csv):
@@ -27,4 +36,5 @@ Regarding playwright:
 
 IMPROVEMENTS TO BE DONE:
 # Make heavy use of typing tools such as pydantic or dataclasses to ease development and cover data types
-# 3 days of next sprint will be needed to wrap google_drive module
+# Maybe separate more step functions regarding the g2crowd scrapper for user_reviews
+# Completely abandon query_selector and work with locators only with playwright
