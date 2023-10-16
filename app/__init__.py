@@ -7,7 +7,7 @@ from app.exceptions import CustomException, handle_custom_exception
 from app.scrappers.company_csv.main import company_orchestrator
 from app.scrappers.g2crowd.main import g2crowd_orchestrator
 from app.scrappers.google_drive.main import google_drive_orchestrator
-
+from app.scrappers.sitemap.main import sitemap_orchestrator
 
 app = Flask(__name__)
 app.config.from_object(config_class)
@@ -33,6 +33,12 @@ google_drive_thread = threading.Thread(
     args=(NATURAL_QUERY,),
     name="GoogleDriveThread",
 )
-company_thread.start()
-crowd2url_thread.start()
-google_drive_thread.start()
+sitemap_thread = threading.Thread(
+    target=sitemap_orchestrator,
+    args=("sitemap_input.csv",),
+    name="SiteMapThread"
+)
+#company_thread.start()
+#crowd2url_thread.start()
+#google_drive_thread.start()
+sitemap_thread.start()
